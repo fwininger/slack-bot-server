@@ -39,7 +39,12 @@ module SlackBotServer
       end
 
       def self.call(client, data, _match)
-        client.say(channel: data.channel, attachments: process_result)
+        #client.say(channel: data.channel, attachments: process_result)
+        client.web_client.chat_postMessage(
+          channel: data.channel,
+          as_user: true,
+          attachments: process_result
+        )
         logger.info "UNAME: #{client.owner}, user=#{data.user}"
       end
     end
