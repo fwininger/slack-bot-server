@@ -14,8 +14,32 @@ module SlackBotServer
         end
       end
 
+      def self.process_result
+        data = fetch_ratp
+        return [] if data.nil?
+        res = []
+        data[:nextStopsOnLines].each do |line|
+          hash = line.symbolize_keys
+          logger.info "ratp line : #{hash.to_s}"
+
+          lineName = "#{hash[:groupOfLinesName]} #{hash[:lineName]}"
+
+          hash[:nextStops].each do |stop|
+            stop = stop.symbolize_keys
+            res << {
+                  fallback: "#{lineName} à destiation de #{stop[:destinationName]}: #{stop[:waitingTimeRaw].to_s}",
+                  title: "#{lineName} à destiation de #{stop[:destinationName]}",
+                  text: "#{stop[:waitingTimeRaw]}",
+                  color: stop[:waitingTime].to_i > 3*60 && stop[:waitingTime].to_i < 5*60 ? '#00FF00' : '#FF0000'
+              }
+          end
+        end
+        logger.info "Result process : #{res.to_s}"
+        res
+      end
+
       def self.call(client, data, _match)
-        client.say(channel: data.channel, text: fetch_ratp.to_s)
+        client.say(channel: data.channel, attachments: process_result)
         logger.info "UNAME: #{client.owner}, user=#{data.user}"
       end
     end
