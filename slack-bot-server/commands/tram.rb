@@ -1,8 +1,8 @@
 module SlackBotServer
   module Commands
-    class Ratp < SlackRubyBot::Commands::Base
+    class Tram < SlackRubyBot::Commands::Base
       def self.fetch_ratp
-        url = "http://apixha.ixxi.net/APIX?keyapp=FvChCBnSetVgTKk324rO&cmd=getNextStopsRealtime&stopArea=846&line=58&direction=115&withText=true&apixFormat=json".freeze
+        url = "http://apixha.ixxi.net/APIX?keyapp=FvChCBnSetVgTKk324rO&cmd=getNextStopsRealtime&stopArea=846&line=58&withText=true&apixFormat=json".freeze
         res = Net::HTTP.get_response(URI(url))
 
         case res
@@ -26,11 +26,18 @@ module SlackBotServer
 
           hash[:nextStops].each do |stop|
             stop = stop.symbolize_keys
+            color = if stop[:waitingTime].to_i < 3*60
+                      '#FF0000'
+                    elsif stop[:waitingTime].to_i < 6*60
+                      '#00FF00'
+                    else
+                      '#ffdb47'
+                    end
             res << {
                   fallback: "#{lineName} à destiation de #{stop[:destinationName]}: #{stop[:waitingTimeRaw].to_s}",
                   title: "#{lineName} à destiation de #{stop[:destinationName]}",
                   text: "#{stop[:waitingTimeRaw]}",
-                  color: stop[:waitingTime].to_i >= 3*60 && stop[:waitingTime].to_i <= 5*60 ? '#00FF00' : '#FF0000'
+                  color: color
               }
           end
         end
